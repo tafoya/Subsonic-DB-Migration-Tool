@@ -36,7 +36,12 @@ public class Main {
             try { migrateStarredArtist(old_db_connection, new_db_connection); } catch (SQLException e) {System.out.println("Starred artist Failed: " + e);}
             try { migrateUserRating(old_db_connection, new_db_connection); } catch (SQLException e) {System.out.println("User rating Failed: " + e);}
             try { migrateTranscoding(old_db_connection, new_db_connection); } catch (SQLException e) {System.out.println("Transcodings Failed: " + e);}
+            try { migratePlaylist(old_db_connection, new_db_connection); } catch (SQLException e) {System.out.println("Playlists Failed: " + e);}
+            try { migratePlaylistFile(old_db_connection, new_db_connection); } catch (SQLException e) {System.out.println("Playlist Files Failed: " + e);}
+            try { migratePlaylistUser(old_db_connection, new_db_connection); } catch (SQLException e) {System.out.println("Playlist Files Failed: " + e);}
 
+            
+            
             new_db_connection.commit();
             new_db_connection.close();
             old_db_connection.close();
@@ -289,6 +294,47 @@ public class Main {
         System.out.println("Inserted all transcodings");
     }
 
+        private static void migratePlaylist(Connection old_db_conn, Connection new_db_conn) throws SQLException {
+        String TABLE_NAME = "playlist";
+        String columns = "id, username, is_public, name, comment, file_count, duration_seconds, created, changed, imported_from";
+
+        ResultSet r = old_db_conn.createStatement().executeQuery("SELECT "+columns+" from "+TABLE_NAME);
+        while(r.next()){
+            insert(new_db_conn, "insert into "+TABLE_NAME+" ( "+columns+" ) values ("+questionMarks(columns)+")",
+                    r.getInt(1), r.getString(2), r.getInt(3), r.getString(4),
+                    r.getString(5), r.getInt(6), r.getInt(7), r.getTimestamp(8),
+                    r.getTimestamp(9), r.getString(10)
+                    );
+        }
+        System.out.println("Inserted all playlist");
+    }
+
+    private static void migratePlaylistFile(Connection old_db_conn, Connection new_db_conn) throws SQLException {
+        String TABLE_NAME = "playlist_file";
+        String columns = "id, playlist_id, media_file_id";
+
+        ResultSet r = old_db_conn.createStatement().executeQuery("SELECT "+columns+" from "+TABLE_NAME);
+        while(r.next()){
+            insert(new_db_conn, "insert into "+TABLE_NAME+" ( "+columns+" ) values ("+questionMarks(columns)+")",
+                    r.getInt(1), r.getInt(2), r.getInt(3)
+            );
+        }
+        System.out.println("Inserted all playlist");
+    }
+
+    private static void migratePlaylistUser(Connection old_db_conn, Connection new_db_conn) throws SQLException {
+        String TABLE_NAME = "playlist_user";
+        String columns = "id, playlist_id, username";
+
+        ResultSet r = old_db_conn.createStatement().executeQuery("SELECT "+columns+" from "+TABLE_NAME);
+        while(r.next()){
+            insert(new_db_conn, "insert into "+TABLE_NAME+" ( "+columns+" ) values ("+questionMarks(columns)+")",
+                    r.getInt(1), r.getInt(2), r.getString(3)
+            );
+        }
+        System.out.println("Inserted all playlist");
+    }
+    
     private static String questionMarks(String columns) {
         int count = columns.split(", ").length;
         StringBuilder builder = new StringBuilder();
